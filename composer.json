@@ -1,0 +1,37 @@
+{
+    "name": "kbcrafted/novelist",
+    "description": "A Laravel Code generator",
+    "type": "library",
+    "require": {
+        "php": "^8.2",
+        "laravel/framework": "^11.0",
+        "ext-mbstring": "*"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^11.0"
+    },
+    "license": "MIT",
+    "autoload": {
+        "psr-4": {
+            "Novelist\\": "src/",
+            "Test\\": "tests/"
+        }
+    },
+    "authors": [
+        {
+            "name": "The kbCrafted Team",
+            "email": "lr@kbcrafted.com"
+        }
+    ],
+    "minimum-stability": "stable",
+    "scripts": {
+        "test": "vendor/bin/phpunit"
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Novelist\\Providers\\NovelistServiceProvider"
+            ]
+        }
+    }
+}

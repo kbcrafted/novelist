@@ -1,0 +1,5 @@
+#Novelist
+
+Stravigor Novelist is a powerful tool for rapidly developing Laravel applications by defining specifications.
+It provides functionalities for parsing specifications into Laravel code structures, facilitating the
+creation of models, controllers, views, and other components.
