@@ -3,8 +3,8 @@
  * This file is part of Stravigor Novelist, a PHP library for generating Laravel applications based on specifications.
  *
  * @package     Novelist
- * @author      Liva Ramarolahy <lr@stravigor.com>
- * @link        https://github.com/stravigor/novelist
+ * @author      Liva Ramarolahy <lr@kbcrafted.com>
+ * @link        https://github.com/kbcrafted/novelist
  * @license     MIT License (https://opensource.org/licenses/MIT)
  */
 
