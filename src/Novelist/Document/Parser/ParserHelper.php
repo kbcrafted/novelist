@@ -60,18 +60,19 @@ trait ParserHelper
      */
     protected function expectOneOf(Token $token, array $expectedTypesOrValues, string $exceptionClass = InvalidTokenException::class): void
     {
-        if (!in_array($token->getType(), $expectedTypesOrValues)) {
-
-            $expectedTypesOrValuesString = array_map(function($token) {
-                return $token->value;
-            }, $expectedTypesOrValues);
-
-            throw new $exceptionClass(sprintf(
-                "Unexpected token %s [%s]. Expecting one of (%s)",
-                $token->getType()->value,
-                $token->getValue(),
-                implode(', ', $expectedTypesOrValuesString)
-            ));
+        if (in_array($token->getType(), $expectedTypesOrValues)) {
+            return;
         }
+
+        $expectedTypesOrValuesString = array_map(function($token) {
+            return $token->value;
+        }, $expectedTypesOrValues);
+
+        throw new $exceptionClass(sprintf(
+            "Unexpected token %s [%s]. Expecting one of (%s)",
+            $token->getType()->value,
+            $token->getValue(),
+            implode(', ', $expectedTypesOrValuesString)
+        ));
     }
 }

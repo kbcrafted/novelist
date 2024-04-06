@@ -1,0 +1,84 @@
+#
+# NDL, Novelist Description Language
+# XML with brackets ... ?
+# JSON with tags and comments ... ?
+#
+novelist (
+    # Novelist version
+    version   = 1.0
+    encoding  = "UTF-8"
+    default   = DEPRECATED
+    max-count = 10 
+    laravel   = null  # As for now, only Laravel 11 is actually supported
+)
+{
+    application (name = "Tsootr", version = -1.0) {
+
+        settings (
+            build_directory = ""
+        )
+
+        namespaces ( root = "")  { 
+            # List of anonymous tags, identified by the parents anonymous-tag ref tag value,
+            # here domain
+            ( domain = "model",    namespace = "App\Models" )
+            ( domain = "policies", namespace = "App\Policies" )
+            ( domain = "model",    namespace = "App\Models" )
+
+            # We can also move the tag ref outside the list of attributes.
+            api_controller ( namespace = "App\Controller\Api" )
+        },
+
+        description 
+        """
+            Nowdocs are to single-quoted strings what heredocs are to double-quoted strings. A nowdoc is specified 
+            similarly to a heredoc, but no parsing is done inside a nowdoc. The construct is ideal for embedding PHP 
+            code or other large blocks of text without the need for escaping. It shares some features in common with 
+            the SGML <![CDATA[ ]]> construct, in that it declares a block of text which is not for parsing.
+
+            With some "quotes" inside. 
+            # This is not a comment
+        """
+
+        models ( anonymous-ref = "name" )  {
+            User (use-uuid = 90, wrong-attr-value)
+#            """
+#            Use this model as a user.
+#            """
+            {
+                properties {
+                    ( name = "id"    type = "bigSerial" bad = true),
+                    ( name = "name"  type = "string" )
+                    ( name = "role"  type = "enum" values = [SUBSCRIBER, PUBLISHER, ADMIN, TEST]  default = SUBSCRIBER ),
+                    ( name = "sizes" type = "enum" values = [1.0, 2.0, 3.0, 4.0] default = 2.0)
+                }
+            },
+
+            # The Inventory model structure doesn't have any property, which is required by an Eloquent model.
+            # So it must be treated as an additional namespace for the child eloquent structure.
+            Inventory {
+
+                # Product will be created inside the App\Models\Inventory namespace.
+                Product {
+                    properties {
+                        list-query 
+                        ```sql
+                            SELECT * FROM users WHERE id > 1;
+                        ```
+                    }
+                }
+            }
+        }
+    }
+
+    #
+    #
+    #
+    deployment {
+        repository (
+            # Can we add comment here?
+            host = "http://github.com"
+            branch = "master"
+        )
+    }
+}

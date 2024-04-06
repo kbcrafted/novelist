@@ -10,6 +10,8 @@
 
 namespace KBCrafted\Novelist\Document;
 
+use KBCrafted\Novelist\Document\Exceptions\InvalidElementAttributeValueException;
+use KBCrafted\Novelist\Document\Exceptions\InvalidTokenException;
 use KBCrafted\Novelist\Document\Parser\Lexer;
 use KBCrafted\Novelist\Document\Parser\ParserHelper;
 use KBCrafted\Novelist\Document\Parser\ParserInterface;
@@ -32,9 +34,9 @@ class Element implements ParserInterface
     protected ElementAttributeList $attributes;
 
     /**
-     * @var string[]
+     * @var string
      */
-    protected array $textContents = [];
+    protected string $textContent = '';
 
     /**
      * @var Element[]
@@ -74,18 +76,18 @@ class Element implements ParserInterface
     }
 
     /**
-     * @return string[]
+     * @return string
      */
-    public function getTextContents(): array
+    public function getTextContent(): string
     {
-        return $this->textContents;
+        return $this->textContent;
     }
 
     /**
      * @param Lexer $lexer
      * @param Token|null $token
      * @return Token
-     * @throws \KBCrafted\Novelist\Document\Exceptions\InvalidTokenException
+     * @throws InvalidTokenException
      */
     public function parse(Lexer $lexer, ?Token $token = null): Token
     {
@@ -103,69 +105,31 @@ class Element implements ParserInterface
 
         $this->expectOneOf($token, [
             TokenType::ROUND_BRACKET_OPEN,
-            TokenType::CURLY_BRACKET_OPEN
+            TokenType::CURLY_BRACKET_OPEN,
+            TokenType::NOWDOC_STRING_VALUE,
+            TokenType::EMBEDDED_SOURCE_CODE
         ]);
         // Expect an attribute list after the identifier
         $token = $this->parseAttributeList($lexer, $token);
+
+        if(in_array($token->getType(), [TokenType::NOWDOC_STRING_VALUE, TokenType::EMBEDDED_SOURCE_CODE])) {
+            $token = $this->parseTextContent($lexer, $token);
+        }
 
         /*
          * After an attribute list, we expect a comma, which indicate a child-less element
          */
         $this->expectOneOf($token, [
             TokenType::COMMA,
-            TokenType::CURLY_BRACKET_OPEN
-        ]);
-
-        if($token->getType() == TokenType::COMMA) {
-            return $this->getNextToken($lexer);
-        }
-
-        // Expect a child list after the text content
-        return $this->parseElementChildren($lexer, $token);
-    }
-
-    /**
-     * @param Lexer $lexer
-     * @param Token $token
-     * @return Token
-     * @throws \KBCrafted\Novelist\Document\Exceptions\InvalidElementAttributeValueException
-     * @throws \KBCrafted\Novelist\Document\Exceptions\InvalidTokenException
-     */
-    protected function parseIdentifier(Lexer $lexer, Token $token): Token
-    {
-        if($token->getType() != TokenType::IDENTIFIER) {
-            return $token;
-        }
-
-        $this->identifier = $token->getValue();
-        $token = $this->getNextToken($lexer);
-
-        $this->expectOneOf($token, [
-            TokenType::ROUND_BRACKET_OPEN,
-            TokenType::CURLY_BRACKET_OPEN
-        ]);
-
-        return $token;
-    }
-
-    /**
-     * @param Lexer $lexer
-     * @param Token $token
-     * @return Token
-     * @throws \KBCrafted\Novelist\Document\Exceptions\InvalidElementAttributeValueException
-     * @throws \KBCrafted\Novelist\Document\Exceptions\InvalidTokenException
-     */
-    protected function parseAttributeList(Lexer $lexer, Token $token): Token
-    {
-        if($token->getType() != TokenType::ROUND_BRACKET_OPEN) {
-            return $token;
-        }
-
-        $token = $this->attributes->parse($lexer, $token);
-        $this->expectOneOf($token, [
+            TokenType::IDENTIFIER,
             TokenType::CURLY_BRACKET_OPEN,
-            TokenType::COMMA
+            TokenType::ROUND_BRACKET_OPEN,
+            TokenType::CURLY_BRACKET_CLOSE
         ]);
+
+        if($token->getType() == TokenType::CURLY_BRACKET_OPEN) {
+            return $this->parseElementChildren($lexer, $token);
+        }
 
         return $this->skipComma($lexer, $token);
     }
@@ -174,8 +138,43 @@ class Element implements ParserInterface
      * @param Lexer $lexer
      * @param Token $token
      * @return Token
-     * @throws \KBCrafted\Novelist\Document\Exceptions\InvalidElementAttributeValueException
-     * @throws \KBCrafted\Novelist\Document\Exceptions\InvalidTokenException
+     * @throws InvalidElementAttributeValueException
+     * @throws InvalidTokenException
+     */
+    protected function parseIdentifier(Lexer $lexer, Token $token): Token
+    {
+        if($token->getType() != TokenType::IDENTIFIER) {
+            return $token;
+        }
+
+        $this->identifier = $token->getValue();
+        return $this->getNextToken($lexer);
+    }
+
+    /**
+     * @param Lexer $lexer
+     * @param Token $token
+     * @return Token
+     * @throws InvalidElementAttributeValueException
+     * @throws InvalidTokenException
+     */
+    protected function parseAttributeList(Lexer $lexer, Token $token): Token
+    {
+        if($token->getType() != TokenType::ROUND_BRACKET_OPEN) {
+            return $token;
+        }
+
+        $token = $this->attributes->parse($lexer, $token);
+
+        return $this->skipComma($lexer, $token);
+    }
+
+    /**
+     * @param Lexer $lexer
+     * @param Token $token
+     * @return Token
+     * @throws InvalidElementAttributeValueException
+     * @throws InvalidTokenException
      */
     protected function parseElementChildren(Lexer $lexer, Token $token): Token
     {
@@ -189,14 +188,10 @@ class Element implements ParserInterface
             , TokenType::CURLY_BRACKET_CLOSE
             ])) {
 
-            if(in_array($token->getType(), [TokenType::NOWDOC_STRING_VALUE, TokenType::EMBEDDED_SOURCE_CODE])) {
-                $token = $this->parseTextContent($lexer, $token);
-            } else {
-                $element = new Element();
-                $token = $element->parse($lexer, $token);
-                $token = $this->skipComma($lexer, $token);
-                $this->children[] = $element;
-            }
+            $element = new Element();
+            $token = $element->parse($lexer, $token);
+            $token = $this->skipComma($lexer, $token);
+            $this->children[] = $element;
         }
 
         // Make sure the element was closed.
@@ -209,20 +204,13 @@ class Element implements ParserInterface
      * @param Lexer $lexer
      * @param Token $token
      * @return Token
-     * @throws \KBCrafted\Novelist\Document\Exceptions\InvalidElementAttributeValueException
-     * @throws \KBCrafted\Novelist\Document\Exceptions\InvalidTokenException
+     * @throws InvalidElementAttributeValueException
+     * @throws InvalidTokenException
      */
     protected function parseTextContent(Lexer $lexer, Token $token): Token
     {
-        $this->textContents[] = $token->getValue();
+        $this->textContent = $token->getValue();
         $token = $this->getNextToken($lexer);
-
-        $this->expectOneOf($token, [
-            TokenType::COMMA,
-            TokenType::CURLY_BRACKET_OPEN,
-            TokenType::CURLY_BRACKET_CLOSE
-        ]);
-
         return $this->skipComma($lexer, $token);
     }
 
@@ -240,8 +228,8 @@ class Element implements ParserInterface
         return [
             'identifier' => $this->identifier,
             'attributes' => $this->attributes->toArray(),
-            'children'   => $children,
-            'content'    => $this->textContents
+            'content'    => $this->textContent,
+            'children'   => $children
         ];
     }
 }

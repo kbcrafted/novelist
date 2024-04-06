@@ -39,7 +39,7 @@ class ElementTest extends TestCase
         '$expectedTextContents as text content, '
     )]
     #[DataProviderExternal(ElementProvider::class, 'getElements')]
-    public function parseElements($input, $expectedIdentifier, $expectedAttributeCount, $expectedChildrenCount, $expectedTextContents)
+    public function parseElements($input, $expectedIdentifier, $expectedAttributeCount, $expectedChildrenCount, $expectedTextContent)
     {
         $lexer = new Lexer(new StringInputStream($input));
         $element = new Element();
@@ -48,7 +48,7 @@ class ElementTest extends TestCase
         $this->assertEquals($expectedIdentifier, $element->getIdentifier());
         $this->assertEquals($expectedAttributeCount, $element->getAttributes()->count());
         $this->assertEquals($expectedChildrenCount, $element->countChildren());
-        $this->assertEquals($expectedTextContents, $element->getTextContents());
+        $this->assertEquals($expectedTextContent, $element->getTextContent());
     }
 
     /**

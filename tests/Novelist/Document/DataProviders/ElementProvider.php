@@ -24,11 +24,11 @@ class ElementProvider
     public static function getElements(): array
     {
         return [
-            ['name () {} ', 'name', 0, 0, []],
-            ['another-name () { """ text content """ } ', 'another-name', 0, 0, ['text content']],
-            ['name-1 () { ``` source code ```} ', 'name-1', 0, 0, ['source code']],
-            ['size (size = 12, length = 23) {} ', 'size', 2, 0, []],
-            ['element-with-children () { """ text content """, child-one {}, child-two {} } ', 'element-with-children', 0, 2, ['text content']],
+            ['name () {} ', 'name', 0, 0, ''],
+            ['another-name () """ text content """ { } ', 'another-name', 0, 0, 'text content'],
+            ['source-code () ``` source code ``` {} ', 'source-code', 0, 0, 'source code'],
+            ['size (size = 12, length = 23) {} ', 'size', 2, 0, ''],
+            ['element-with-children () """ text content """ { child-one {}, child-two {} } ', 'element-with-children', 0, 2, 'text content'],
         ];
     }
 
