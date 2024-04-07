@@ -84,6 +84,14 @@ class Element implements ParserInterface
     }
 
     /**
+     * @return Element[]
+     */
+    public function getChildren(): array
+    {
+        return $this->children;
+    }
+
+    /**
      * @param Lexer $lexer
      * @param Token|null $token
      * @return Token
